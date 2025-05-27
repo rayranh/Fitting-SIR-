@@ -17,8 +17,8 @@ SIR_odes <- function (t,x,params){
   }
 
 #parameters 
-gamma <- 1/55
-beta <- 0.0016
+gamma <- 1/100
+beta <- 1/1100
 
 #times 
 
