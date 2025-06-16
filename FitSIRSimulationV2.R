@@ -2,7 +2,7 @@ library(deSolve)
 library(dplyr) 
 rm(list = ls())
 
-set.seed(123)
+#set.seed(123)
 
 
 #Initial state parameters 
@@ -28,16 +28,11 @@ SIR_odes <- function (t,x,parms){
   list(c(dS,dI,dR))
 } 
 
-odeFunc <- function(parms){
-  #running model 
-  df_Model <- as.data.frame(ode(y = initial_state, 
-                                times = t, func = SIR_odes, parms = params))
-  return(df_Model)
-} 
+
+
 
 df <- odeFunc(params)
 
-#sample size of people that were looked at 
 sample_size <- 10 
 
 
@@ -55,10 +50,11 @@ SimDataFunc <- function(parms){
   
 }  
 
+#needs to be saved on its own rbinom() changes each time 
 SimData <- SimDataFunc(params)
 
 
-#loglhood fn 
+
 logLhoodfunc <- function(parms){
   results <- as.data.frame(ode(y = initial_state, times = t, func = SIR_odes, parms = parms))
   fit_data <- results %>%
@@ -75,19 +71,32 @@ logLhoodfunc <- function(parms){
 }
 logLhoodfunc(params)
 
-#creating another fxn for optim  
+#creating another fxn for optim   
 
-print(optim(par = params, fn = logLhoodfunc, method = "Nelder-Mead"))
+### REMEMBER LOGLIKELIHOOD WAS MADE NEGATIVE SO SMALLER VALUES ARE LARGER ### 
+fitparms <- print(optim(par = params, fn = logLhoodfunc, method = "Nelder-Mead"))
 
 
+odeFunc <- function(parms){
+  #running model 
+  df_Model <- as.data.frame(ode(y = initial_state, 
+                                times = t, func = SIR_odes, parms = parms))
+  return(df_Model)
+} 
+
+df2 <- odeFunc(fitparms$par)
 plot(x =SimData$time, y= SimData$fracInf, type = 'p', col = 'red', ylim = c(0,1), main = 'sir', xlab = 'time', ylab = 'number of infected people')
-lines(x = df$S , type = 'l', col= 'black') 
-lines(x = df$I, type = 'l', col= 'green')
-lines(x = df$R,  type = 'l', col = 'blue')  
+lines(x = df2$S , type = 'l', col= 'black') 
+lines(x = df2$I, type = 'l', col= 'green')
+lines(x = df2$R,  type = 'l', col = 'blue')  
 legend("topright", title="key", legend=c("susceptible", "infected", "recovered"), 
        col = c("black","green", "blue"), cex = 0.5,
        lty=c(1,1,1)) 
 
-
+beta2=seq(0.01, 0.3,.001)
+Temp=numeric()
+for(i in 1:length(beta2)) {Temp[i]=logLhoodfunc(c(beta2[i], params[2]))}
+#plot(beta2, -Temp,"l")
+#abline(h=max(-Temp)-2)
 
 
