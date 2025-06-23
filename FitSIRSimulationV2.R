@@ -30,9 +30,6 @@ SIR_odes <- function (t,x,parms){
 
 
 
-
-df <- odeFunc(params)
-
 sample_size <- 10 
 
 
@@ -83,6 +80,8 @@ odeFunc <- function(parms){
                                 times = t, func = SIR_odes, parms = parms))
   return(df_Model)
 } 
+
+
 
 df2 <- odeFunc(fitparms$par)
 plot(x =SimData$time, y= SimData$fracInf, type = 'p', col = 'red', ylim = c(0,1), main = 'sir', xlab = 'time', ylab = 'number of infected people')
