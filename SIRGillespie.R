@@ -7,8 +7,8 @@ time <- 0
 timeEnd<- 100 
 
 
-beta = 0.002  
-gamma = 0.01  
+beta = 0.001  
+gamma = 1/20  
 N = 101  
 
 S0 = 999 
@@ -21,6 +21,8 @@ I <- numeric(0)
 R <- numeric(0)   
 t <- numeric(0)
 
+
+
 while (time < timeEnd) {  
   
   #need to update S and I 
@@ -28,8 +30,9 @@ while (time < timeEnd) {
   I <-c(I,I0) 
   R <- c(R,R0)
   t <- c(t, time)
-  dt <- rexp(1,beta*S0*I0 + gamma*I0)
+  
   #updating time value 
+  dt <- rexp(1,beta*S0*I0 + gamma*I0)
   time <- time + dt    
   
   #creating random event 
@@ -53,7 +56,7 @@ df_long <- melt(out_df, id.vars = c("time"))
 
 # Plot
 ggplot(df_long, aes(x = time, y = value, color = variable)) + geom_line() + 
-  scale_color_manual (values = c("S"="black", "I" = "red", "R" = "blue"))+
+  scale_color_manual (values = c("S"="black", "I" = "red", "R" = "blue"))+ 
   labs(title = "Stochastic SIR Simulation", x = "Time", y = "Individuals") +
   theme_minimal()
 
