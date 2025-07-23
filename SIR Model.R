@@ -34,19 +34,12 @@ initialValues <- c(
 times <- seq(0,100,by= 0.1)  
 
 results <- as.data.frame(ode(y = initialValues, 
-                             times = times, func = SIR_odes, parms = pars)) 
+                             times = times, func = SIR_odes, parms = pars))  
 
-# resultLong <- melt(results, id.vars = c("time"))
-# 
-# ggplot(data = resultLong, mapping = aes(x = time, y = S)) + 
-#   geom_line(color = 'variable') + geom_line(mapping = aes(x = time, y = I, color = '')) + 
-#   geom_line(mapping = aes(x = time, y = R, color = 'blue')) 
+longResults <- melt(results, id.vars = "time", value.name = "value")
 
-plot(x =results$time, y=results$S, type = 'l', col = 'black', ylim = c(0,1000), xlim = c(0,100),  main = 'sir', xlab = 'time', ylab = 'number of infected people')
-lines(x = results$time, y= results$I, type = 'l', col= 'red')
-lines(x = results$time, y=results$R, type = 'l', col = 'blue') 
-legend("right", title="key", legend=c("susceptible", "infected", "recovered"),  
-       bty = "n",
-       cex = 0.6,
-       col = c("black","red", "blue"),
-       lty=c(1,1,1)) 
+ggplot(data = longResults, mapping = aes(x = time , y = value, colour = variable, group = variable)) +
+  geom_line() + scale_color_manual (values = c("S"="black", "I" = "red", "R" = "blue")) + theme_minimal() + 
+  labs(title = "Stochastic SIR Simulation", x = "Time", y = "Individuals") 
+
+
