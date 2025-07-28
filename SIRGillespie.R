@@ -1,14 +1,17 @@
 rm(list = ls())
 library(ggplot2) 
 library(dplyr) 
-library(reshape2)
+library(reshape2) 
+library(tidyr)
 
 time <- 0 
 
 S<- numeric(0)
 I <- numeric(0) 
 R <- numeric(0)   
-t <- numeric(0)
+t <- numeric(0) 
+
+timeValues <- seq(from = 0, to = 100, by = 0.1)
 
 set.seed(234)   
 GillespFunc <- function(beta, gamma, timeEnd, S0, I0, R0) {   
@@ -44,25 +47,51 @@ GillespFunc <- function(beta, gamma, timeEnd, S0, I0, R0) {
   return(cbind(S,I,R,t))
   }
 
-
 # df <- as.data.frame(GillespFunc(beta = 0.001, gamma = 1/20, timeEnd = 200, S0 = 999, I0 = 1, R0 = 0)) 
 
-out <- replicate(5, GillespFunc(beta = 0.001, gamma = 1/20, timeEnd = 100, S0 = 900, I0 = 100, R0 = 0), simplify = FALSE)
+#list of matrices 
+out <- replicate(5, GillespFunc(beta = 0.001, gamma = 1/20, timeEnd = 100, S0 = 900, I0 = 100, R0 = 0), simplify = FALSE) 
 
+finalList <- lapply(out, function(simMatrix) { 
+  SimTime <- simMatrix[, "t"]  
+  
+  
+  # For each standardized time value, find the most recent simulation time (t <= tv)
+  rowTime <- sapply(timeValues, function(tv) { 
+    w <- which(SimTime <= tv)
+    if (length(w) == 0) NA else max(w) 
+  }) 
+  
+  # Extract t and S values based on matched rows, t() transposing so rows and columns are like dflong 
+  result <- t(sapply(rowTime, function(i) {
+    if (!is.na(i)) simMatrix[i, c("S", "I", "R")] else c(NA, NA, NA)
+  })) 
+  
+  df <- as.data.frame(result)
+  df$time <- timeValues  # standardized time column   
+  df
+}) 
+
+
+
+
+sim_dfs <- bind_rows(finalList, .id = "sim") 
+
+df_long <- melt(sim_dfs, , id.vars = c("time", "sim"))
 
 # Convert each simulation to a data.frame and add an ID column
-sim_dfs <- lapply(seq_along(out), function(i) {
-  df <- as.data.frame(out[[i]])
-  colnames(df) <- c("S", "I", "R", "time")
-  df$sim <- paste0("Sim_", i)
-  return(df)
-})
+# sim_dfs <- lapply(seq_along(out), function(i) {
+#   df <- as.data.frame(out[[i]])
+#   colnames(df) <- c("S", "I", "R", "time")
+#   df$sim <- paste0("Sim_", i)
+#   return(df)
+# })
 
 # Combine all into one data frame
-combined_df <- bind_rows(sim_dfs)
+# combined_df <- bind_rows(sim_dfs)
 
 # Reshape to long format for ggplot
-df_long <- melt(combined_df, id.vars = c("time", "sim"))
+# df_long <- melt(combined_df, id.vars = c("time", "sim"))
 
 # Plot
 ggplot(df_long, aes(x = time, y = value, color = variable)) +
