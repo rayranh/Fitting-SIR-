@@ -50,7 +50,7 @@ GillespFunc <- function(beta, gamma, timeEnd, S0, I0, R0) {
 #df <- as.data.frame(GillespFunc(beta = 0.001, gamma = 1/20, timeEnd = 200, S0 = 999, I0 = 1, R0 = 0)) 
 
 #list of matrices 
-out <- replicate(10, GillespFunc(beta = 0.01, gamma = 1/20, timeEnd = 100, S0 = 50, I0 = 1, R0 = 0), simplify = FALSE) 
+out <- replicate(10, GillespFunc(beta = 0.01, gamma = 1/20, timeEnd = 100, S0 = 100, I0 = 1, R0 = 0), simplify = FALSE) 
 
 #standardizing time 
 finalList <- lapply(out, function(simMatrix) { 
@@ -86,12 +86,18 @@ CI <- df_long %>% group_by(time, variable) %>% summarise(average = mean(value),
                                                          .groups = "drop")
 
 # Plot
-ggplot(df_long, aes(x = time, y = value, color = variable, group = interaction(sim, variable))) +
-  geom_line(aes(alpha = 10)) + scale_color_manual (values = c("S"="black", "I" = "red", "R" = "blue"))+
-  geom_ribbon(data = CI, aes(x = time, ymin = lower, ymax = upper, fill = variable, group = variable), alpha = 0.3, inherit.aes = FALSE)+
-  scale_fill_manual(values = c("S" = "black", "I" = "red", "R" = "blue")) +
-  labs(title = "Gillespie SIR Simulations", x = "Time", y = "Count") +
-  theme_minimal()
+# ggplot(df_long, aes(x = time, y = value, color = variable, group = interaction(sim, variable))) +
+#   geom_line(aes(alpha = 10)) + scale_color_manual (values = c("S"="black", "I" = "red", "R" = "blue"))+
+#   geom_ribbon(data = CI, aes(x = time, ymin = lower, ymax = upper, fill = variable, group = variable), alpha = 0.3, inherit.aes = FALSE)+
+#   scale_fill_manual(values = c("S" = "black", "I" = "red", "R" = "blue")) +
+#   labs(title = "Gillespie SIR Simulations", x = "Time", y = "Count") +
+#   theme_minimal()
 
+ggplot(data = CI, aes(x = time, y = med, colour = variable, group = variable)) + geom_line() +
+  scale_color_manual (values = c("S"="black", "I" = "red", "R" = "blue")) + 
+  geom_ribbon(aes(x = time, ymin = lower, ymax = upper, fill = variable, group = variable), alpha = 0.3, inherit.aes = FALSE) + 
+  scale_fill_manual(values = c("S" = "black", "I" = "red", "R" = "blue")) + 
+  labs(title = "Gillespie SIR Simulations", x = "Time", y = "Count") + 
+  theme_minimal()
 
 
