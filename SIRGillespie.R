@@ -47,11 +47,12 @@ GillespFunc <- function(beta, gamma, timeEnd, S0, I0, R0) {
   return(cbind(S,I,R,t))
   }
 
-# df <- as.data.frame(GillespFunc(beta = 0.001, gamma = 1/20, timeEnd = 200, S0 = 999, I0 = 1, R0 = 0)) 
+#df <- as.data.frame(GillespFunc(beta = 0.001, gamma = 1/20, timeEnd = 200, S0 = 999, I0 = 1, R0 = 0)) 
 
 #list of matrices 
-out <- replicate(5, GillespFunc(beta = 0.001, gamma = 1/20, timeEnd = 100, S0 = 900, I0 = 100, R0 = 0), simplify = FALSE) 
+out <- replicate(10, GillespFunc(beta = 0.01, gamma = 1/20, timeEnd = 100, S0 = 50, I0 = 1, R0 = 0), simplify = FALSE) 
 
+#standardizing time 
 finalList <- lapply(out, function(simMatrix) { 
   SimTime <- simMatrix[, "t"]  
   
@@ -74,27 +75,23 @@ finalList <- lapply(out, function(simMatrix) {
 
 
 
-
-sim_dfs <- bind_rows(finalList, .id = "sim") 
-
+#adding sim id, sim 1, sim 2, etc. 
+sim_dfs <- bind_rows(finalList, .id = "sim")  
 df_long <- melt(sim_dfs, , id.vars = c("time", "sim"))
 
-# Convert each simulation to a data.frame and add an ID column
-# sim_dfs <- lapply(seq_along(out), function(i) {
-#   df <- as.data.frame(out[[i]])
-#   colnames(df) <- c("S", "I", "R", "time")
-#   df$sim <- paste0("Sim_", i)
-#   return(df)
-# })
-
-# Combine all into one data frame
-# combined_df <- bind_rows(sim_dfs)
-
-# Reshape to long format for ggplot
-# df_long <- melt(combined_df, id.vars = c("time", "sim"))
+CI <- df_long %>% group_by(time, variable) %>% summarise(average = mean(value), 
+                                                         lower = quantile(value, 0.025),
+                                                         upper = quantile(value, 0.975), 
+                                                         med = median(value), 
+                                                         .groups = "drop")
 
 # Plot
-ggplot(df_long, aes(x = time, y = value, color = variable)) +
-  geom_line() + scale_color_manual (values = c("S"="black", "I" = "red", "R" = "blue"))+ 
+ggplot(df_long, aes(x = time, y = value, color = variable, group = interaction(sim, variable))) +
+  geom_line(aes(alpha = 10)) + scale_color_manual (values = c("S"="black", "I" = "red", "R" = "blue"))+
+  geom_ribbon(data = CI, aes(x = time, ymin = lower, ymax = upper, fill = variable, group = variable), alpha = 0.3, inherit.aes = FALSE)+
+  scale_fill_manual(values = c("S" = "black", "I" = "red", "R" = "blue")) +
   labs(title = "Gillespie SIR Simulations", x = "Time", y = "Count") +
   theme_minimal()
+
+
+
