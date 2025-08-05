@@ -1,4 +1,4 @@
-rm(list = ls())
+# rm(list = ls())
 library(ggplot2) 
 library(dplyr) 
 library(reshape2) 
@@ -9,11 +9,15 @@ time <- 0
 S<- numeric(0)
 I <- numeric(0) 
 R <- numeric(0)   
-t <- numeric(0) 
+t <- numeric(0)  
 
-timeValues <- seq(from = 0, to = 100, by = 0.1)
 
-set.seed(234)   
+#vector to standardize time with, using lapply "final list" function  
+### need to change this + Gillesp Func ### 
+timeValues <- seq(from = 0, to = 3000, by = 0.1)
+
+set.seed(234)    
+#Gillespie Function for introducing stochasticity 
 GillespFunc <- function(beta, gamma, timeEnd, S0, I0, R0) {   
   while (time < timeEnd) {  
     
@@ -44,13 +48,24 @@ GillespFunc <- function(beta, gamma, timeEnd, S0, I0, R0) {
       R0 = R0 + 1 
     } 
   }  
-  return(cbind(S,I,R,t))
+  return(cbind(S,I,R,t,beta,gamma))
   }
 
-#df <- as.data.frame(GillespFunc(beta = 0.001, gamma = 1/20, timeEnd = 200, S0 = 999, I0 = 1, R0 = 0)) 
+
+R0_init <- 0.005
+gamma <- 0.005 
+N <- 50 
+I0 <- 10
+beta =R0_init*gamma/N
+
+#df <- as.data.frame(GillespFunc(beta = beta, gamma = 0.005, timeEnd = 100, S0 = N, I0 = 10, R0 = 0)) %>% mutate(Reff = beta*S/gamma)
+
+
+
 
 #list of matrices 
-out <- replicate(10, GillespFunc(beta = 0.01, gamma = 1/20, timeEnd = 100, S0 = 100, I0 = 1, R0 = 0), simplify = FALSE) 
+out <- replicate(100, GillespFunc(beta = beta, gamma = 0.005, timeEnd = 3000, S0 = N
+                                     , I0 = I0, R0 = 0), simplify = FALSE) 
 
 #standardizing time 
 finalList <- lapply(out, function(simMatrix) { 
@@ -72,7 +87,6 @@ finalList <- lapply(out, function(simMatrix) {
   df$time <- timeValues  # standardized time column   
   df
 }) 
-
 
 
 #adding sim id, sim 1, sim 2, etc. 
@@ -97,7 +111,7 @@ ggplot(data = CI, aes(x = time, y = med, colour = variable, group = variable)) +
   scale_color_manual (values = c("S"="black", "I" = "red", "R" = "blue")) + 
   geom_ribbon(aes(x = time, ymin = lower, ymax = upper, fill = variable, group = variable), alpha = 0.3, inherit.aes = FALSE) + 
   scale_fill_manual(values = c("S" = "black", "I" = "red", "R" = "blue")) + 
-  labs(title = "Gillespie SIR Simulations", x = "Time", y = "Count") + 
+  labs(title = "Gillespie SIR Simulations", x = "Time", y = "Count") + labs(caption = paste("R0 =", R0_init))
   theme_minimal()
 
 
